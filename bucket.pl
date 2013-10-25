@@ -672,7 +672,7 @@ sub irc_on_public {
                 [ $protect, $fact ] );
         }
         &say( $chl => "Okay, $bag{who}, updated the protection bit." );
-    } elsif ( $addressed and $bag{msg} =~ /^undo last(?: (#\S+))?/ ) {
+    } elsif ( $addressed and $bag{msg} =~ /^undo last(?: (#\S+))?/i ) {
         Log "$bag{who} called undo:";
         my $uchannel = $1 || $chl;
         my $undo = $undo{$uchannel};
@@ -761,7 +761,7 @@ sub irc_on_public {
         } else {
             &say( $chl => "Sorry, $bag{who}, can't undo $undo->[0] yet" );
         }
-    } elsif ( $addressed and $operator and $bag{msg} =~ /^merge (.*) => (.*)/ )
+    } elsif ( $addressed and $operator and $bag{msg} =~ /^merge (.*) => (.*)/i )
     {
         my ( $src, $dst ) = ( $1, $2 );
         $stats{merge}++;
@@ -779,7 +779,7 @@ sub irc_on_public {
             },
             EVENT => 'db_success'
         );
-    } elsif ( $addressed and $operator and $bag{msg} =~ /^alias (.*) => (.*)/ )
+    } elsif ( $addressed and $operator and $bag{msg} =~ /^alias (.*) => (.*)/i )
     {
         my ( $src, $dst ) = ( $1, $2 );
         $stats{alias}++;
@@ -797,7 +797,7 @@ sub irc_on_public {
             },
             EVENT => 'db_success'
         );
-    } elsif ( $operator and $addressed and $bag{msg} =~ /^lookup #?(\d+)\W*$/ ) {
+    } elsif ( $operator and $addressed and $bag{msg} =~ /^lookup #?(\d+)\W*$/i ) {
         $_[KERNEL]->post(
             db  => 'SINGLE',
             SQL => 'select id, fact, verb, tidbit from bucket_facts 
@@ -816,7 +816,7 @@ sub irc_on_public {
         );
     } elsif ( $operator
         and $addressed
-        and $bag{msg} =~ /^forget (?:that|#(\d+))\W*$/ )
+        and $bag{msg} =~ /^forget (?:that|#(\d+))\W*$/i )
     {
         my $id = $1 || $stats{last_fact}{$chl};
         unless ($id) {
@@ -945,7 +945,7 @@ sub irc_on_public {
               &round_time( &talking($chl) - time );
         }
         &say( $chl => $reply );
-    } elsif ( $operator and $addressed and $bag{msg} =~ /^stat (\w+)\??/ ) {
+    } elsif ( $operator and $addressed and $bag{msg} =~ /^stat (\w+)\??/i ) {
         my $key = $1;
         if ( $key eq 'keys' ) {
             &say_long( $chl => "$bag{who}: valid keys are: "
@@ -971,7 +971,7 @@ sub irc_on_public {
         $irc->yield( quit => "OHSHI--" );
     } elsif ( $operator
         and $addressed
-        and $bag{msg} =~ /^set(?: (\w+) (.*)|$)/ )
+        and $bag{msg} =~ /^set(?: (\w+) (.*)|$)/i )
     {
         my ( $key, $val ) = ( $1, $2 );
 
@@ -1008,7 +1008,7 @@ sub irc_on_public {
 
         &save;
         return;
-    } elsif ( $operator and $addressed and $bag{msg} =~ /^get (\w+)\W*$/ ) {
+    } elsif ( $operator and $addressed and $bag{msg} =~ /^get (\w+)\W*$/i ) {
         my ($key) = ($1);
         unless ( exists $config_keys{$key} ) {
             &say_long( $chl => "$bag{who}: Valid keys are: "
@@ -1034,7 +1034,7 @@ sub irc_on_public {
               )
               . "."
         );
-    } elsif ( $addressed and $bag{msg} =~ /^list var (\w+)$/ ) {
+    } elsif ( $addressed and $bag{msg} =~ /^list var (\w+)$/i ) {
         my $var = $1;
         unless ( exists $replacables{$var} ) {
             &say( $chl => "Sorry, $bag{who}, I don't know a variable '$var'." );
@@ -1082,7 +1082,7 @@ sub irc_on_public {
 
         my @vals = @{ $replacables{$var}{vals} };
         &say( $chl => "$var:", &make_list( sort @vals ) );
-    } elsif ( $addressed and $bag{msg} =~ /^remove value (\w+) (.+)$/ ) {
+    } elsif ( $addressed and $bag{msg} =~ /^remove value (\w+) (.+)$/i ) {
         my ( $var, $value ) = ( lc $1, lc $2 );
         unless ( exists $replacables{$var} ) {
             &say( $chl =>
@@ -1130,7 +1130,7 @@ sub irc_on_public {
         return if $key eq 'cache';
 
         &say( $chl => "$bag{who}, '$value' isn't a valid value for \$$var!" );
-    } elsif ( $addressed and $bag{msg} =~ /^add value (\w+) (.+)$/ ) {
+    } elsif ( $addressed and $bag{msg} =~ /^add value (\w+) (.+)$/i ) {
         my ( $var, $value ) = ( lc $1, $2 );
         unless ( exists $replacables{$var} ) {
             &say( $chl =>
@@ -1167,7 +1167,7 @@ sub irc_on_public {
 
         &sql( "insert into bucket_values (var_id, value) values (?, ?)",
             [ $replacables{$var}{id}, $value ] );
-    } elsif ( $operator and $addressed and $bag{msg} =~ /^create var (\w+)\W*$/ ) {
+    } elsif ( $operator and $addressed and $bag{msg} =~ /^create var (\w+)\W*$/i ) {
         my $var = $1;
         if ( exists $replacables{$var} ) {
             &say( $chl =>
@@ -1186,7 +1186,7 @@ sub irc_on_public {
             [$var], { cmd => "create_var", var => $var } );
     } elsif ( $operator
         and $addressed
-        and $bag{msg} =~ /^remove var (\w+)\s*(!+)?$/ )
+        and $bag{msg} =~ /^remove var (\w+)\s*(!+)?$/i )
     {
         my $var = $1;
         unless ( exists $replacables{$var} ) {
@@ -1222,7 +1222,7 @@ sub irc_on_public {
         delete $replacables{$var};
     } elsif ( $operator
         and $addressed
-        and $bag{msg} =~ /^var (\w+) type (var|verb|noun)\W*$/ )
+        and $bag{msg} =~ /^var (\w+) type (var|verb|noun)\W*$/i )
     {
         my ( $var, $type ) = ( $1, $2 );
         unless ( exists $replacables{$var} ) {
